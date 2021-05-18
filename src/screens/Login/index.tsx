@@ -1,6 +1,15 @@
-import React from 'react'
-import { View, Text, StyleSheet, Image } from 'react-native'
-import { Button, TextInput } from 'react-native-paper'
+import React, { useState } from 'react'
+import { View, StyleSheet, Image } from 'react-native'
+import { Button, TextInput, Snackbar } from 'react-native-paper'
+import { StackScreenProps } from '@react-navigation/stack'
+
+type RootStackParamList = {
+  Login: undefined
+  Home: undefined
+  Avaliacao: undefined
+}
+
+type Props = StackScreenProps<RootStackParamList, 'Login'>
 
 const styles = StyleSheet.create({
   container: {
@@ -8,7 +17,7 @@ const styles = StyleSheet.create({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 70,
+    padding: 10,
     backgroundColor: '#FFF'
   },
   form: {
@@ -16,8 +25,9 @@ const styles = StyleSheet.create({
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center'
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 60
   },
   input: {
     width: '100%'
@@ -31,7 +41,11 @@ const styles = StyleSheet.create({
   }
 })
 
-const Login: React.FC = () => {
+function Login({ navigation }: Props) {
+  const [email, setEmail] = useState('')
+  const [senha, setSenha] = useState('')
+  const [visible, setVisible] = useState(false)
+
   return (
     <View style={styles.container}>
       <Image source={require('../../../assets/logo.png')} />
@@ -40,18 +54,40 @@ const Login: React.FC = () => {
           style={styles.input}
           label="Email"
           mode="outlined"
+          value={email}
+          onChangeText={text => setEmail(text)}
           left={<TextInput.Icon name="account" />}
         />
         <TextInput
           style={styles.input}
           label="Senha"
           mode="outlined"
+          secureTextEntry
+          value={senha}
+          onChangeText={text => setSenha(text)}
           left={<TextInput.Icon name="lock" />}
         />
+        <Button
+          mode="contained"
+          style={styles.button}
+          onPress={() => {
+            if (email && senha) {
+              navigation.replace('Home')
+            } else {
+              setVisible(true)
+            }
+          }}
+        >
+          Entrar
+        </Button>
       </View>
-      <Button mode="contained" style={styles.button}>
-        Entrar
-      </Button>
+      <Snackbar
+        duration={2000}
+        visible={visible}
+        onDismiss={() => setVisible(false)}
+      >
+        Usuario e senha precisam ser informados
+      </Snackbar>
     </View>
   )
 }

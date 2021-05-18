@@ -4,18 +4,19 @@ import {
   View,
   Text,
   StyleSheet,
-  StyleProp,
-  TouchableOpacity,
-  ListRenderItem
+  TouchableOpacity
 } from 'react-native'
 import { IconButton } from 'react-native-paper'
+import { StackScreenProps } from '@react-navigation/stack'
 
-interface IData {
-  id: number
-  nome: string
-  status: string
-  assinado: boolean
+type RootStackParamList = {
+  Login: undefined
+  Home: undefined
+  Avaliacao: undefined
+  Assinatura: undefined
 }
+
+type Props = StackScreenProps<RootStackParamList, 'Home'>
 
 const styles = StyleSheet.create({
   container: {
@@ -103,7 +104,7 @@ const data = [
   }
 ]
 
-const Home: React.FC = () => {
+function Home({ navigation }: Props) {
   return (
     <View style={styles.container}>
       <FlatList
@@ -111,12 +112,30 @@ const Home: React.FC = () => {
         keyExtractor={item => item.id.toString()}
         style={styles.lista}
         renderItem={info => (
-          <TouchableOpacity style={styles.item}>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => {
+              info.item.assinado
+                ? navigation.navigate('Avaliacao')
+                : navigation.navigate('Assinatura')
+            }}
+          >
             <View style={styles.itemInfo}>
               <Text>{info.item.nome}</Text>
-              <Text>{info.item.status}</Text>
+              <Text
+                style={{
+                  color: info.item.status !== 'Aguardando' ? '#d10d0d' : '#000'
+                }}
+              >
+                {info.item.status}
+              </Text>
             </View>
-            {!info.item.assinado && <IconButton icon="pen" />}
+            {!info.item.assinado && (
+              <IconButton
+                icon="pen"
+                onPress={() => navigation.navigate('Assinatura')}
+              />
+            )}
           </TouchableOpacity>
         )}
       />
