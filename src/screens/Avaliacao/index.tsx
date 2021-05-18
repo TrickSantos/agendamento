@@ -2,11 +2,13 @@ import React, { useState, useLayoutEffect, useEffect } from 'react'
 import { ScrollView, Text, View, StyleSheet } from 'react-native'
 import { Checkbox, IconButton, Snackbar } from 'react-native-paper'
 import { StackScreenProps } from '@react-navigation/stack'
+import api from '../../services/api'
 
 type RootStackParamList = {
   Login: undefined
   Home: undefined
-  Avaliacao: undefined
+  Avaliacao: { id: number }
+  Assinatura: { id: number }
 }
 
 type Props = StackScreenProps<RootStackParamList, 'Avaliacao'>
@@ -38,9 +40,10 @@ const itens = [
   { item: 'Saiu da entrevista antes do seu término', valor: 4 }
 ]
 
-function Avaliacao({ navigation }: Props) {
+function Avaliacao({ navigation, route }: Props) {
   const [pontos, setPontos] = useState(0)
   const [visible, setVisible] = useState(false)
+  const { id } = route.params
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -57,8 +60,14 @@ function Avaliacao({ navigation }: Props) {
           <IconButton
             icon="content-save"
             color="#FFF"
-            onPress={() => {
-              navigation.replace('Home')
+            onPress={async () => {
+              pontos > 3
+                ? await api
+                    .put(`/candidatos/${id}`, { status: 'Reprovado' })
+                    .then(() => navigation.replace('Home'))
+                : await api
+                    .put(`/candidatos/${id}`, { status: 'Aprovado' })
+                    .then(() => navigation.replace('Home'))
             }}
           />
         </View>

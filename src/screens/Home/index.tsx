@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   FlatList,
   View,
@@ -6,17 +6,117 @@ import {
   StyleSheet,
   TouchableOpacity
 } from 'react-native'
-import { IconButton } from 'react-native-paper'
+import { IconButton, Snackbar } from 'react-native-paper'
 import { StackScreenProps } from '@react-navigation/stack'
+import api from '../../services/api'
 
 type RootStackParamList = {
   Login: undefined
   Home: undefined
-  Avaliacao: undefined
-  Assinatura: undefined
+  Avaliacao: {
+    id: number
+  }
+  Assinatura: {
+    id: number
+  }
 }
 
 type Props = StackScreenProps<RootStackParamList, 'Home'>
+
+interface IData {
+  id: number
+  nome: string
+  status: string
+  assinado: boolean
+}
+
+function Home({ navigation }: Props) {
+  const [candidatos, setCandidatos] = useState([] as IData[])
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    navigation.addListener('focus', async () => {
+      await api
+        .get('/candidatos')
+        .then(({ data }) => {
+          setCandidatos(data)
+        })
+        .catch(e => {
+          console.log(e)
+        })
+    })
+  }, [])
+
+  useEffect(() => {
+    async function Load() {
+      await api
+        .get('/candidatos')
+        .then(({ data }) => {
+          setCandidatos(data)
+        })
+        .catch(e => {
+          console.log(e)
+        })
+    }
+    Load()
+  }, [])
+
+  return (
+    <View style={styles.container}>
+      <FlatList
+        data={candidatos}
+        keyExtractor={item => item.id.toString()}
+        style={styles.lista}
+        renderItem={info => (
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => {
+              if (info.item.status === 'Aguardando') {
+                info.item.assinado
+                  ? navigation.navigate('Avaliacao', {
+                      id: info.item.id
+                    })
+                  : navigation.navigate('Assinatura', {
+                      id: info.item.id
+                    })
+              } else {
+                setVisible(true)
+              }
+            }}
+          >
+            <View style={styles.itemInfo}>
+              <Text>{info.item.nome}</Text>
+              <Text
+                style={{
+                  color: info.item.status !== 'Aguardando' ? '#d10d0d' : '#000'
+                }}
+              >
+                {info.item.status}
+              </Text>
+            </View>
+            {!info.item.assinado && (
+              <IconButton
+                icon="pen"
+                onPress={() =>
+                  navigation.navigate('Assinatura', {
+                    id: info.item.id
+                  })
+                }
+              />
+            )}
+          </TouchableOpacity>
+        )}
+      />
+      <Snackbar
+        visible={visible}
+        duration={2000}
+        onDismiss={() => setVisible(false)}
+      >
+        Este candidato já terminou sua avaliação
+      </Snackbar>
+    </View>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -46,101 +146,5 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   }
 })
-
-const data = [
-  {
-    id: 1,
-    nome: 'Candidato 1',
-    status: 'Reprovado',
-    assinado: false
-  },
-  {
-    id: 2,
-    nome: 'Candidato 2',
-    status: 'Aguardando',
-    assinado: true
-  },
-  {
-    id: 3,
-    nome: 'Candidato 3',
-    status: 'Aguardando',
-    assinado: false
-  },
-  {
-    id: 4,
-    nome: 'Candidato 4',
-    status: 'Aguardando',
-    assinado: true
-  },
-  {
-    id: 5,
-    nome: 'Candidato 5',
-    status: 'Aguardando',
-    assinado: false
-  },
-  {
-    id: 6,
-    nome: 'Candidato 2',
-    status: 'Aguardando',
-    assinado: true
-  },
-  {
-    id: 7,
-    nome: 'Candidato 3',
-    status: 'Aguardando',
-    assinado: false
-  },
-  {
-    id: 8,
-    nome: 'Candidato 4',
-    status: 'Aguardando',
-    assinado: true
-  },
-  {
-    id: 9,
-    nome: 'Candidato 5',
-    status: 'Aguardando',
-    assinado: false
-  }
-]
-
-function Home({ navigation }: Props) {
-  return (
-    <View style={styles.container}>
-      <FlatList
-        data={data}
-        keyExtractor={item => item.id.toString()}
-        style={styles.lista}
-        renderItem={info => (
-          <TouchableOpacity
-            style={styles.item}
-            onPress={() => {
-              info.item.assinado
-                ? navigation.navigate('Avaliacao')
-                : navigation.navigate('Assinatura')
-            }}
-          >
-            <View style={styles.itemInfo}>
-              <Text>{info.item.nome}</Text>
-              <Text
-                style={{
-                  color: info.item.status !== 'Aguardando' ? '#d10d0d' : '#000'
-                }}
-              >
-                {info.item.status}
-              </Text>
-            </View>
-            {!info.item.assinado && (
-              <IconButton
-                icon="pen"
-                onPress={() => navigation.navigate('Assinatura')}
-              />
-            )}
-          </TouchableOpacity>
-        )}
-      />
-    </View>
-  )
-}
 
 export default Home
